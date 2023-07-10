@@ -1,0 +1,9 @@
+albumentations
+opencv-python
+pandas
+pre-commit
+pytorch-lightning
+PyYAML
+torch
+torchvision
+wandb

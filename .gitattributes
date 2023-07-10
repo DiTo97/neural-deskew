@@ -1,0 +1,5 @@
+# No conversion of OS line endings
+* -text
+
+# It ensures UNIX-style line endings for some files
+*.sh text eol=lf

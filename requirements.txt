@@ -1,0 +1,8 @@
+albumentations
+opencv-python
+pandas
+pytorch-lightning
+PyYAML
+torch
+torchvision
+wandb

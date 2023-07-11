@@ -27,7 +27,7 @@ class Deskewer(abc_Deskewer):
     def __call__(self, array: neural_deskew.Color) -> np_typing.NDArray[np.float32]:
         """It computes skew angle probas over the angle space"""
         modeargs = opencv.THRESH_BINARY | opencv.THRESH_OTSU
-        array = opencv.threshold(array, 0, 255, modeargs)[1]  # to BW image
+        array = opencv.threshold(array, 0, 255, modeargs)[1]  # to BW array
 
         spectrum = np.fft.fft2(array)
         spectrum = np.fft.fftshift(spectrum)

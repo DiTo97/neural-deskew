@@ -10,11 +10,12 @@ from neural_deskew.core.space import angle_space
 from neural_deskew.core.transforms import decode, encode
 
 
-class Deskewer(ABC):
+class abc_Deskewer(ABC):
     """A base class for document image deskew"""
 
     def __init__(self, num_angles: int, *args: Any, **kwargs: dict[str, Any]) -> None:
         self.angle_space = angle_space(num_angles)
+        self.noangle = int(num_angles / 2)
 
     @abstractmethod
     def __call__(self, array: neural_deskew.Color) -> np_typing.NDArray[np.float32]:

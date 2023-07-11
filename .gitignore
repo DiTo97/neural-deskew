@@ -1,6 +1,9 @@
 # Cache
+wandb/
 __pycache__/
-**/*.egg-info/
 
 # IDE
 .vscode/
+
+# PIP
+**/*.egg-info/

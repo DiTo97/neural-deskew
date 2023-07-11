@@ -33,7 +33,7 @@ def resize_if_necessary(image: Image.Image, max_size: int) -> Image.Image:
     return image.resize(resized_size, mode)
 
 
-def encode(image: Image.Image, max_size: int) -> neural_deskew.Array:
+def encode(image: Image.Image, max_size: int) -> neural_deskew.Color:
     image = resize_if_necessary(image, max_size)
     array = np.asarray(image)
 

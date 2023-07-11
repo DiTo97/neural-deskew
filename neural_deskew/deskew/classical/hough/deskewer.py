@@ -34,16 +34,18 @@ class Deskewer(abc_Deskewer):
             linemap, angles, distances, num_peaks=self.num_peaks, threshold=threshold
         )
 
-        probas = np.zeros_like(self.angle_space, dtype=np.float32)
+        logits = np.zeros_like(self.angle_space, dtype=np.float32)
 
         if len(angles_peaks) == 0:
+            probas = logits
             probas[self.noangle] = 1.0
+
             return probas
 
         matches = angles_peaks[:, None] == self.angle_space
         matches = np.nonzero(matches)[1]
 
-        np.add.at(probas, matches, 1)
-        probas = softmax(probas)
+        np.add.at(logits, matches, 1)
+        probas = softmax(logits)
 
         return probas

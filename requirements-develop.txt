@@ -4,6 +4,7 @@ pandas==2.0.3
 pre-commit==3.3.3
 pytorch-lightning==2.0.5
 PyYAML==6.0
+scikit-image==0.21.0
 torch==2.0.1
 torchvision==0.15.2
 wandb==0.15.5

@@ -19,6 +19,7 @@ setup_env() {
 
     python -m pip install --upgrade pip
     python -m pip install -r requirements-develop.txt
+    python -m pip install -e .
 
     pre-commit install
 

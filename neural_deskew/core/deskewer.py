@@ -23,9 +23,9 @@ class abc_Deskewer(ABC):
 
     def detect_angle(self, array: neural_deskew.Color) -> float:
         probas = self(array)
-        idx = np.argmax(probas)
+        maxidx = np.argmax(probas)
 
-        return self.angle_space[idx]
+        return self.angle_space[maxidx]
 
     def deskew(
         self,

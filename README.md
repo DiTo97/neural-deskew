@@ -35,3 +35,7 @@ The model weights and architecture are checkpointed using the [checkpoint]()
 ## Configuration
 
 The project includes configuration files config.yaml and model_config.yaml for easy customization of hyperparameters such as learning rate, batch size, hidden dimension, and number of epochs. These files allow seamless adaptation of the training process to specific requirements.
+
+## Resources
+
+- [YAML serialization for augmentation pipelines](https://albumentations.ai/docs/examples/serialization/)

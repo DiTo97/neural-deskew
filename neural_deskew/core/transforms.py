@@ -4,10 +4,12 @@ from typing import Any
 import cv2 as opencv
 import numpy as np
 import torch
+from joblib import Parallel, delayed
 from PIL import Image
 from skimage.transform import rotate
 
 import neural_deskew
+from neural_deskew.core.deskewer import abc_Deskewer, forward
 
 
 Transform = typing.Callable[[Image.Image], torch.Tensor]
@@ -55,3 +57,24 @@ def decode(image: Image.Image, angle: float, **kwargs: dict[str, Any]) -> Image.
     decoded = Image.fromarray(decoded)
 
     return decoded
+
+
+def to_confidence_tensor(deskewers: list[abc_Deskewer], max_size: int = 1280) -> Transform:
+    def inner(image: Image.Image) -> torch.Tensor:
+        encoded = encode(image, max_size)
+        
+        probas = Parallel(-1)(delayed(forward)(model, encoded) for model in deskewers)
+        probas = np.column_stack(probas)
+
+        confidence = torch.from_numpy(probas)
+        return confidence
+    
+    return inner
+
+
+class ToConfidenceTensorv2:
+    def __init__(self, deskewers: list[abc_Deskewer], max_size: int = 1280) -> None:
+        self.transform = to_confidence_tensor(deskewers, max_size)
+
+    def __call__(self, image: Image.Image) -> torch.Tensor:
+        return self.transform(image)

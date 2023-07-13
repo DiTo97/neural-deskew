@@ -39,3 +39,4 @@ The project includes configuration files config.yaml and model_config.yaml for e
 ## Resources
 
 - [YAML serialization for augmentation pipelines](https://albumentations.ai/docs/examples/serialization/)
+- [download and use W&B artifacts](https://docs.wandb.ai/guides/artifacts/download-and-use-an-artifact)

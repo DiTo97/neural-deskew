@@ -22,12 +22,10 @@ def parse_args() -> dict[str, Any]:
     )
 
     parser.add_argument(
-        "--artifact", help="The name of the W&B artifact", type=str, required=True
-    )
-
-    parser.add_argument(
         "--artifact-dir", help="The local artifact dir", type=str, required=True
     )
+
+    parser.add_argument("--artifact", help="The name of the W&B artifact", type=str)
 
     parser.add_argument(
         "--train-split", help="The train split", type=float, default=0.6
@@ -48,8 +46,8 @@ def parse_args() -> dict[str, Any]:
 
 def main(
     data_dir: str,
-    artifact: str,
     artifact_dir: str,
+    artifact: str | None = None,
     train_split: float = 0.6,
     valid_split: float = 0.2,
     test_split: float = 0.2,
@@ -140,14 +138,15 @@ def main(
 
         annot.to_csv(annot_path, index=False)
 
-    env = wandb.init()
+    if artifact is not None:
+        env = wandb.init()
 
-    artifact = wandb.Artifact(artifact, type="dataset")
+        artifact = wandb.Artifact(artifact, type="dataset")
 
-    artifact.add_dir(images_dir)
-    artifact.add_dir(annotations_dir)
+        artifact.add_dir(images_dir)
+        artifact.add_dir(annotations_dir)
 
-    env.log_artifact(artifact)
+        env.log_artifact(artifact)
 
 
 if __name__ == "__main__":

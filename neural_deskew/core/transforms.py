@@ -1,11 +1,16 @@
+import typing
 from typing import Any
 
 import cv2 as opencv
 import numpy as np
+import torch
 from PIL import Image
 from skimage.transform import rotate
 
 import neural_deskew
+
+
+Transform = typing.Callable[[Image.Image], torch.Tensor]
 
 
 def resize_if_necessary(image: Image.Image, max_size: int) -> Image.Image:

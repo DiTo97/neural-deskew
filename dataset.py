@@ -53,10 +53,13 @@ class DeskewDataset(Dataset):
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         image_path = self.annotations[idx]
 
-        angle = random.uniform(-90, +90)
+        angle_idx = random.choice(range(len(self.angle_space))
+        
+        angle = self.angle_space[angle_idx]
+        angle = np.rad2deg(angle)
 
         array = opencv.imread(image_path)
-        array = rotate(array, -angle, cval=1.0)
+        array = rotate(array, angle, cval=1.0)
 
         if self.image_transform is not None:
             array = self.image_transform(array)
@@ -64,12 +67,9 @@ class DeskewDataset(Dataset):
 
         image = self.transform(Image.fromarray(array))
 
-        angle = np.deg2rad(angle)
-
-        angle_idx = np.abs(self.angle_space - angle)
-        angle_idx = angle_idx.argmin()
-
         angle_distr = torch.zeros(len(self.angle_space))
+        angle_distr = torch.float32(angle_distr)
+        
         angle_distr[angle_idx] = 1.0
 
         return image, angle_distr

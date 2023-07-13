@@ -65,11 +65,14 @@ class DeskewDataset(Dataset):
             array = self.image_transform(array)
             array = array["image"]
 
-        image = self.transform(Image.fromarray(array))
+        array = array * 255
+        array = array.astype(np.uint8)
+        
+        image = Image.fromarray(array).convert("RGB")
 
         angle_distr = torch.zeros(len(self.angle_space))
         angle_distr = torch.float32(angle_distr)
         
         angle_distr[angle_idx] = 1.0
 
-        return image, angle_distr
+        return self.transform(image), angle_distr

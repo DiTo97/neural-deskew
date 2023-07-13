@@ -42,3 +42,7 @@ class abc_Deskewer(ABC):
         decoded = decode(image, angle, **kwargs)
 
         return decoded
+
+
+def forward(model: abc_Deskewer, array: neural_deskew.Color) -> np_typing.NDArray[np.float32]:
+    return model(array)

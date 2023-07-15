@@ -53,8 +53,8 @@ class DeskewDataset(Dataset):
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         image_path = self.annotations[idx]
 
-        angle_idx = random.choice(range(len(self.angle_space))
-        
+        angle_idx = random.choice(range(len(self.angle_space)))
+
         angle = self.angle_space[angle_idx]
         angle = np.rad2deg(angle)
 
@@ -67,12 +67,12 @@ class DeskewDataset(Dataset):
 
         array = array * 255
         array = array.astype(np.uint8)
-        
+
         image = Image.fromarray(array).convert("RGB")
 
         angle_distr = torch.zeros(len(self.angle_space))
         angle_distr = torch.float32(angle_distr)
-        
+
         angle_distr[angle_idx] = 1.0
 
         return self.transform(image), angle_distr

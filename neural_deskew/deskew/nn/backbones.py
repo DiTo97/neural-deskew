@@ -18,6 +18,8 @@ class Encoder(nn.Module):
             num_channels, hidden_dim, kernel_size=kernel_size, stride=1, padding=1
         )
 
+        self.batch_norm1d = nn.BatchNorm1d(hidden_dim)
+        
         self.relu = nn.ReLU()
 
         self.maxpool = nn.MaxPool1d(kernel_size=kernel_size, stride=3)
@@ -27,6 +29,7 @@ class Encoder(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.conv1d(x)
+        x = self.batch_norm1d(x)
         x = self.relu(x)
         x = self.maxpool(x)
         x = self.dropout(x)

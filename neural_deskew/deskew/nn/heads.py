@@ -22,30 +22,3 @@ class PIVEN(nn.Module):
         coeff = torch.sigmoid(coeff)
 
         return torch.cat((interval, coeff), dim=1)
-
-
-class Regression(nn.Module):
-    """A base head for regression"""
-
-    def __init__(self, hidden_dim: int) -> None:
-        super(Regression, self).__init__()
-
-        self.linear = nn.Linear(hidden_dim, 1)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.linear(x)
-
-
-class Classification(nn.Module):
-    """A base head for classification"""
-
-    def __init__(self, hidden_dim: int, num_classes: int) -> None:
-        super(Classification, self).__init__()
-
-        self.linear = nn.Linear(hidden_dim, num_classes)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        logits = self.linear(x)
-        probas = torch.softmax(logits, dim=1)
-
-        return probas

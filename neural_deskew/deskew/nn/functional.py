@@ -10,13 +10,13 @@ def pred_interval_to_point_estimate(outputs: torch.Tensor) -> torch.Tensor:
     return point_estimate
 
 
-def pred_interval_to_confidence(outputs: torch.Tensor, coverage: float = 0.95) -> torch.Tensor:
+def pred_interval_to_confidence(outputs: torch.Tensor, alpha: float = 0.05) -> torch.Tensor:    
     U = outputs[:, 0]
     L = outputs[:, 1]
     
     distance = U - L
 
     confidence = torch.sigmoid(-distance) 
-    confidence = confidence * coverage
+    confidence = confidence * (1 - alpha)
     
     return confidence

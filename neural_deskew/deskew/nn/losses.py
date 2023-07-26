@@ -1,5 +1,36 @@
 import torch
 import torch.nn as nn
+from torch.nn import functional as F
+
+from .functional import pred_interval_to_point_estimate
+
+
+def mpiw(
+    U: torch.Tensor, L: torch.Tensor, k: torch.Tensor, eps: float = 1e-6
+) -> float:
+    """The mean prediction interval width (MPIW) metric
+
+    equation (4) from
+
+    E. Simhayev, K. Gilad, and R. Lior, 2020
+    PIVEN: A DNN for Prediction Intervals with Specific Value Prediction
+    """
+    nume = torch.sum(torch.abs(U - L) * k)
+    deno = torch.sum(k) + eps
+
+    metric = nume / deno
+    return metric
+
+
+def picp(k: torch.Tensor) -> float:
+    """The prediction interval coverage probability (PICP) metric
+    
+    equation (1) from
+
+    E. Simhayev, K. Gilad, and R. Lior, 2020
+    PIVEN: A DNN for Prediction Intervals with Specific Value Prediction"""
+    metric = torch.mean(k)
+    return metric
 
 
 class PIVEN(nn.Module):
@@ -9,51 +40,51 @@ class PIVEN(nn.Module):
     PIVEN: A DNN for Prediction Intervals with Specific Value Prediction
     """
 
-    def __init__(self, lambda_in=15.0, soften=160.0, alpha=0.05, beta=0.5, eps: float = 1e-6) -> None:
-        super(PIVEN, self).__init__()
+    def __init__(
+        self, 
+        lambda_ : float = 15.0, 
+        soft: float = 160.0, 
+        alpha: float = 0.05, 
+        beta: float = 0.5, 
+        eps: float = 1e-6
+    ) -> None:
+        super().__init__()
 
-        self.lambda_in = lambda_in
-        self.soften = soften
+        self.lambda_ = lambda_
+        self.soft = soft
         self.alpha = alpha
         self.beta = beta
         self.eps = eps
 
-    def forward(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+    def forward(self, outputs: torch.Tensor, targets: torch.Tensor) -> float:
         U = outputs[:, 0]  # U(x)
         L = outputs[:, 1]  # L(x)
         v = outputs[:, 2]  # v(x)
         y = targets[:, 0]  # y(x)
 
-        batch_size = float(y.size(0))
+        n = outputs.size(0)
 
-        alpha_ = torch.tensor(self.alpha)
-        lambda_ = torch.tensor(self.lambda_in)
+        k_soft_upper = torch.sigmoid(self.soft * (U - y))
+        k_soft_lower = torch.sigmoid(self.soft * (y - L))
+        
+        k_hard_upper = torch.maximum(0.0, torch.sign(U - y))
+        k_hard_lower = torch.maximum(0.0, torch.sign(y - L))
 
-        # k_soft uses sigmoid
-        k_soft = torch.sigmoid((U - y) * self.soften) * torch.sigmoid(
-            (y - L) * self.soften
-        )
+        k_soft = k_soft_upper * k_soft_lower
+        k_hard = k_hard_upper * k_hard_lower
 
-        # k_hard uses sign step function
-        k_hard = torch.maximum(torch.sign(U - y), 0.0) * torch.maximum(
-            torch.sign(y - L), 0.0
-        )
+        mpiw_capt = mpiw(U, L, k_hard, self.eps)
+        picp_soft = picp(k_soft)
 
-        # MPIW_capt from equation 4
-        MPIW_capt = torch.sum(torch.abs(U - L) * k_hard) / (torch.sum(k_hard) + self.eps)
+        penalty = torch.maximum(0.0, 1 - self.alpha - picp_soft)
+        penalty = torch.square(penalty)
 
-        # equation 1 where k is k_soft
-        PICP_soft = torch.mean(k_soft)
+        loss = mpiw_capt + torch.sqrt(n) * lambda_ * penalty  # PI loss
 
-        # pi loss from section 4.2
-        pi_loss = MPIW_capt + lambda_ * torch.sqrt(batch_size) * torch.square(
-            torch.maximum(0.0, 1.0 - alpha_ - PICP_soft)
-        )
+        estimates = pred_interval_to_point_estimate(outputs)
+        estimates = torch.reshape(estimates, (-1, 1))
 
-        y_piven = v * U + (1 - v) * L  # equation 3
-        y_piven = torch.reshape(y_piven, (-1, 1))
+        valloss = F.mse_loss(targets, estimates)  # equation (5)
+        cumloss = self.beta * loss + (1 - self.beta) * valloss  # equation (6)
 
-        v_loss = nn.functional.mse_loss(targets, y_piven)  # equation 5
-        piven_loss = self.beta * pi_loss + (1 - self.beta) * v_loss  # equation 6
-
-        return piven_loss
+        return cumloss

@@ -63,12 +63,13 @@ class PIVEN(nn.Module):
         y = targets[:, 0]  # y(x)
 
         n = outputs.size(0)
+        n = torch.tensor(n)
 
         k_soft_upper = torch.sigmoid(self.soft * (U - y))
         k_soft_lower = torch.sigmoid(self.soft * (y - L))
         
-        k_hard_upper = torch.maximum(0.0, torch.sign(U - y))
-        k_hard_lower = torch.maximum(0.0, torch.sign(y - L))
+        k_hard_upper = torch.clamp(torch.sign(U - y), 0.)
+        k_hard_lower = torch.clamp(torch.sign(y - L), 0.)
 
         k_soft = k_soft_upper * k_soft_lower
         k_hard = k_hard_upper * k_hard_lower
@@ -76,10 +77,10 @@ class PIVEN(nn.Module):
         mpiw_capt = mpiw(U, L, k_hard, self.eps)
         picp_soft = picp(k_soft)
 
-        penalty = torch.maximum(0.0, 1 - self.alpha - picp_soft)
+        penalty = torch.clamp(1 - self.alpha - picp_soft, 0.)
         penalty = torch.square(penalty)
 
-        loss = mpiw_capt + torch.sqrt(n) * lambda_ * penalty  # PI loss
+        loss = mpiw_capt + torch.sqrt(n) * self.lambda_ * penalty  # PI loss
 
         estimates = pred_interval_to_point_estimate(outputs)
         estimates = torch.reshape(estimates, (-1, 1))

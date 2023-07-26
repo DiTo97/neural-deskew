@@ -9,13 +9,14 @@ class PIVEN(nn.Module):
     PIVEN: A DNN for Prediction Intervals with Specific Value Prediction
     """
 
-    def __init__(self, lambda_in=15.0, soften=160.0, alpha=0.05, beta=0.5):
+    def __init__(self, lambda_in=15.0, soften=160.0, alpha=0.05, beta=0.5, eps: float = 1e-6) -> None:
         super(PIVEN, self).__init__()
 
         self.lambda_in = lambda_in
         self.soften = soften
         self.alpha = alpha
         self.beta = beta
+        self.eps = eps
 
     def forward(self, outputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         U = outputs[:, 0]  # U(x)
@@ -39,7 +40,7 @@ class PIVEN(nn.Module):
         )
 
         # MPIW_capt from equation 4
-        MPIW_capt = torch.sum(torch.abs(U - L) * k_hard) / (torch.sum(k_hard) + 0.001)
+        MPIW_capt = torch.sum(torch.abs(U - L) * k_hard) / (torch.sum(k_hard) + self.eps)
 
         # equation 1 where k is k_soft
         PICP_soft = torch.mean(k_soft)

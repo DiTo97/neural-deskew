@@ -5,19 +5,19 @@ from functools import lru_cache
 import albumentations
 import cv2 as opencv
 import numpy as np
-import numpy.typing as np_typing
 import pandas as pd
 import torch
 from PIL import Image
 from skimage.transform import rotate
 from torch.utils.data import Dataset
 
+import neural_deskew
 from neural_deskew.core import transforms
 from neural_deskew.core.space import angle_space, angle_cross_similarity
 
 
 @lru_cache(maxsize=128)
-def imread(path: str) -> np_typing.NDArray[np.uint8]
+def imread(path: str) -> neural_deskew.Color:
     return opencv.imread(path)
 
 
@@ -70,9 +70,9 @@ class DeskewDataset(Dataset):
         return len(self.annotations)
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, float | torch.Tensor]:
-        angle_idx = random.choice(range(len(self.angle_space)))
+        angleidx = random.choice(range(len(self.angle_space)))
 
-        angle = self.angle_space[angle_idx]
+        angle = self.angle_space[angleidx]
 
         array = imread(self.annotations[idx])
         array = rotate(array, angle, cval=1.0)
@@ -86,8 +86,8 @@ class DeskewDataset(Dataset):
 
         image = Image.fromarray(array).convert("RGB")
 
-        angle_encoding = self.encoder(image)
+        encoding = self.encoder(image)
 
-        truth = angle if not self.softreg else torch.from_numpy(self.angle_cross_similarity[angle_idx])
+        truth = angle if not self.softreg else torch.from_numpy(self.angle_cross_similarity[angleidx])
 
-        return angle_encoding, truth
+        return encoding, truth

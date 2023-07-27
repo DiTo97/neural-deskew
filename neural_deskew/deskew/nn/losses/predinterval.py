@@ -79,10 +79,12 @@ def predinterval_loss(
 
 
 class PIVEN(nn.Module):
-    """The PIVEN loss for regression with prediction intervals
+    """The PIVEN loss for regression with prediction intervals from [1]_
 
-    E. Simhayev, K. Gilad, and R. Lior, 2020
-    PIVEN: A DNN for Prediction Intervals with Specific Value Prediction
+    References
+    ----------
+    .. [1] E. Simhayev, K. Gilad, and R. Lior, 2020
+       PIVEN: A DNN for Prediction Intervals with Specific Value Prediction
     """
 
     def __init__(

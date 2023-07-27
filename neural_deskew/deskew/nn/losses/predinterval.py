@@ -81,9 +81,9 @@ def predinterval_loss(
     penalty = 1 - alpha - picp_soft
     penalty = torch.square(torch.clamp(penalty, 0.0))
 
-    intervalloss = mpiw_capt + torch.sqrt(n) * lambda_ * penalty
+    interval_loss = mpiw_capt + torch.sqrt(n) * lambda_ * penalty
 
-    return intervalloss
+    return interval_loss
 
 
 class PIVEN(nn.Module):

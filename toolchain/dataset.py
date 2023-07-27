@@ -13,7 +13,7 @@ from torch.utils.data import Dataset
 
 import neural_deskew
 from neural_deskew.core import transforms
-from neural_deskew.core.space import angle_space, angle_cross_similarity
+from neural_deskew.core.space import angle_cross_similarity, angle_space
 
 
 @lru_cache(maxsize=128)
@@ -30,7 +30,7 @@ class DeskewDataset(Dataset):
         image_transform: albumentations.Compose | None = None,
         softreg: bool = False,
         seed: int = 10,
-        **kwargs
+        **kwargs,
     ) -> None:
         random.seed(seed)
 
@@ -61,10 +61,10 @@ class DeskewDataset(Dataset):
         self.angle_space = angle_space(**space_kwargs)
 
         self.angle_cross_similarity = (
-            None if not self.softreg
-            else angle_cross_similarity(self.angle_space, **cross_similarity_kwargs) 
+            None
+            if not self.softreg
+            else angle_cross_similarity(self.angle_space, **cross_similarity_kwargs)
         )
-
 
     def __len__(self) -> int:
         return len(self.annotations)
@@ -88,6 +88,10 @@ class DeskewDataset(Dataset):
 
         encoding = self.encoder(image)
 
-        truth = angle if not self.softreg else torch.from_numpy(self.angle_cross_similarity[angleidx])
+        truth = (
+            angle
+            if not self.softreg
+            else torch.from_numpy(self.angle_cross_similarity[angleidx])
+        )
 
         return encoding, truth

@@ -1,5 +1,6 @@
 import pathlib
 import random
+from functools import lru_cache
 
 import albumentations
 import cv2 as opencv
@@ -10,8 +11,14 @@ from PIL import Image
 from skimage.transform import rotate
 from torch.utils.data import Dataset
 
+import neural_deskew
 from neural_deskew.core import transforms
-from neural_deskew.core.space import angle_space
+from neural_deskew.core.space import angle_cross_similarity, angle_space
+
+
+@lru_cache(maxsize=128)
+def imread(path: str) -> neural_deskew.Color:
+    return opencv.imread(path)
 
 
 class DeskewDataset(Dataset):
@@ -19,10 +26,11 @@ class DeskewDataset(Dataset):
         self,
         dataset_dir: str,
         split: str,
-        transform: transforms.Transform,
-        num_angles: int,
+        encoder: transforms.Transform,
         image_transform: albumentations.Compose | None = None,
+        softreg: bool = False,
         seed: int = 10,
+        **kwargs,
     ) -> None:
         random.seed(seed)
 
@@ -42,23 +50,31 @@ class DeskewDataset(Dataset):
         annotations = annotations["filename"].apply(join_transform)
         annotations = np.array(annotations)
 
-        self.angle_space = angle_space(num_angles)
         self.annotations = annotations
-        self.transform = transform
+        self.encoder = encoder
         self.image_transform = image_transform
+        self.softreg = softreg
+
+        space_kwargs = kwargs.get("angle-space", {})
+        cross_similarity_kwargs = kwargs.get("angle-cross-similarity", {})
+
+        self.angle_space = angle_space(**space_kwargs)
+
+        self.angle_cross_similarity = (
+            None
+            if not self.softreg
+            else angle_cross_similarity(self.angle_space, **cross_similarity_kwargs)
+        )
 
     def __len__(self) -> int:
         return len(self.annotations)
 
-    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
-        image_path = self.annotations[idx]
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, float | torch.Tensor]:
+        angleidx = random.choice(range(len(self.angle_space)))
 
-        angle_idx = random.choice(range(len(self.angle_space)))
+        angle = self.angle_space[angleidx]
 
-        angle = self.angle_space[angle_idx]
-        angle = np.rad2deg(angle)
-
-        array = opencv.imread(image_path)
+        array = imread(self.annotations[idx])
         array = rotate(array, angle, cval=1.0)
 
         if self.image_transform is not None:
@@ -70,9 +86,12 @@ class DeskewDataset(Dataset):
 
         image = Image.fromarray(array).convert("RGB")
 
-        angle_distr = torch.zeros(len(self.angle_space))
-        angle_distr = torch.float32(angle_distr)
+        encoding = self.encoder(image)
 
-        angle_distr[angle_idx] = 1.0
+        truth = (
+            angle
+            if not self.softreg
+            else torch.from_numpy(self.angle_cross_similarity[angleidx])
+        )
 
-        return self.transform(image), angle_distr
+        return encoding, truth

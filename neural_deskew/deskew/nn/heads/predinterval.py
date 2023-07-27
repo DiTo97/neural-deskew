@@ -29,7 +29,6 @@ def predinterval_to_confidence(
 class PIVEN(nn.Module):
     """The PIVEN head for regression with prediction intervals from [1]_
 
-
     References
     ----------
     .. [1] E. Simhayev, K. Gilad, and R. Lior, 2020

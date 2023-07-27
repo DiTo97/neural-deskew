@@ -8,7 +8,9 @@ from neural_deskew.deskew.nn.heads.predinterval import predinterval_to_point_est
 def mpiw(U: torch.Tensor, L: torch.Tensor, k: torch.Tensor, eps: float = 1e-6) -> float:
     """The mean prediction interval width (MPIW) metric
 
-    equation (4) from [1]_
+    Notes
+    -----
+    The equation (4) in [1]_
 
     References
     ----------
@@ -25,7 +27,9 @@ def mpiw(U: torch.Tensor, L: torch.Tensor, k: torch.Tensor, eps: float = 1e-6) -
 def picp(k: torch.Tensor) -> float:
     """The prediction interval coverage probability (PICP) metric
 
-    equation (1) from [1]_
+    Notes
+    -----
+    The equation (1) in [1]_
 
     References
     ----------
@@ -44,7 +48,11 @@ def predinterval_loss(
     alpha: float = 0.05,
     eps: float = 1e-6,
 ) -> float:
-    """The prediction interval (PI) loss from [1]_
+    """The prediction interval (PI) loss
+    
+    Notes
+    -----
+    The loss introduced in section 4.2 in [1]_
 
     References
     ----------
@@ -79,7 +87,11 @@ def predinterval_loss(
 
 
 class PIVEN(nn.Module):
-    """The PIVEN loss for regression with prediction intervals from [1]_
+    """The PIVEN loss for regression with prediction intervals
+
+    Notes
+    -----
+    The loss introduced in equation (8) in [1]_
 
     References
     ----------
@@ -104,14 +116,14 @@ class PIVEN(nn.Module):
         self.eps = eps
 
     def forward(self, outputs: torch.Tensor, targets: torch.Tensor) -> float:
-        intervalloss = predinterval_loss(
+        interval_loss = predinterval_loss(
             outputs, targets, self.lambda_, self.soft, self.alpha, self.eps
-        )
+        )  # equation (6)
 
-        estimates = predinterval_to_point_estimate(outputs)
-        estimates = torch.reshape(estimates, (-1, 1))
+        point_estimates = predinterval_to_point_estimate(outputs)  # equation (3)
+        point_estimates = torch.reshape(point_estimates, (-1, 1))
 
-        regloss = F.mse_loss(estimates, targets)  # equation (5)
-        cumloss = self.beta * intervalloss + (1 - self.beta) * regloss  # equation (6)
+        regloss = F.mse_loss(point_estimates, targets)  # equation (7)
+        cumloss = self.beta * interval_loss + (1 - self.beta) * regloss  # equation (8)
 
         return cumloss

@@ -2,6 +2,7 @@ from functools import lru_cache
 
 import numpy as np
 import numpy.typing as np_typing
+from scipy.special import softmax
 
 
 @lru_cache(maxsize=5)

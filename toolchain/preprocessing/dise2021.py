@@ -17,11 +17,6 @@ def preprocess(output_dir: str) -> str:
 
     gdown.cached_download(_URL, artifact, postprocess=gdown.extractall)
 
-    metadata_artifact = artifact_dir / "metadata.csv"
-
-    if metadata_artifact.exists():
-        return str(artifact_dir)
-
     metadata = []
 
     for split_dir in artifact_dir.iterdir():
@@ -33,6 +28,8 @@ def preprocess(output_dir: str) -> str:
             angle = float(angle)
 
             metadata.append((image, angle))
+
+    metadata_artifact = artifact_dir / "metadata.csv"
 
     metadata = pd.DataFrame.from_records(metadata, columns=["image", "angle"])
     metadata.to_csv(metadata_artifact, index=False)

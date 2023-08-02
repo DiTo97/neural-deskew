@@ -1,4 +1,4 @@
-"""A script for pre-processing a skew detection dataset"""
+"""A script for pre-processing a document image skew estimation collection"""
 import argparse
 import os
 import pathlib

@@ -5,7 +5,7 @@ import gdown
 import pandas as pd
 
 
-_artifact = "dise2021_45.zip"
+_artifact = "dise2021.zip"
 _URL = "https://drive.google.com/uc?id=1a-a6aOqdsghjeHGLnCLsDs7NoJIus-Pw"
 
 

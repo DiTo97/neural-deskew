@@ -1,5 +1,6 @@
 """A script for pre-processing the Rdocuments dataset"""
 import pathlib
+from functools import partial
 
 import kaggle
 import pandas as pd
@@ -8,6 +9,37 @@ import parse
 
 _artifact = "vishnunkumar/rdocuments"
 _format = "Image-{:d}-{angle:d}{image}.{ext}"
+
+
+def _parse_transform(parser: parse.Parser, series: pd.Series) -> pd.Series:
+    imagename = series.id
+    imageinfo = parser.parse(imagename).named
+
+    imagepath = images_dir / imagename
+    imagepath = str(imagepath)
+
+    image = f"{imageinfo['image']}.{imageinfo['ext']}"
+    angle = float(imageinfo["angle"])
+
+    message = (
+        f"The angle in {imagename} is not consistent. "
+        f"Expected {series.angle}, got {angle}"
+    )
+
+    assert angle == series.angle, message
+
+    absangle = abs(series.angle)
+
+    transformed = {
+        "image": image,
+        "imagepath": imagepath,
+        "angle": angle,
+        "absangle": absangle,
+    }
+
+    transformed = pd.Series(transformed)
+
+    return transformed
 
 
 def preprocess(output_dir: str) -> str:
@@ -26,37 +58,7 @@ def preprocess(output_dir: str) -> str:
 
     images_dir = artifact_dir / "rdocuments"
 
-    parser = parse.compile(_format)
-
-    def parse_transform(series: pd.Series) -> pd.Series:
-        imagename = series.id
-        imageinfo = parser.parse(imagename).named
-    
-        imagepath = images_dir / imagename
-        imagepath = str(imagepath)
-
-        image = f"{imageinfo['image']}.{imageinfo['ext']}"
-        angle = float(imageinfo["angle"])
-
-        message = (
-            f"The angle in {imagename} is not consistent. "
-            f"Expected {series.angle}, got {angle}"
-        )
-
-        assert angle == series.angle, message
-
-        absangle = abs(series.angle)
-
-        transformed = {
-            "image": image,
-            "imagepath": imagepath,
-            "angle": angle,
-            "absangle": absangle,
-        }
-
-        transformed = pd.Series(transformed)
-
-        return transformed
+    parse_transform = partial(_parse_transform, parser=parse.compile(_format))
     
     metadata = metadata.apply(parse_transform, axis=1)
 

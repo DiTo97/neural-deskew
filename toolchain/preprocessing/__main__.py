@@ -298,7 +298,7 @@ def main(
         annot.to_csv(annot_path, index=False)
 
     if artifact is not None:
-        env = wandb.init()
+        env = wandb.init(project="neural-deskew")
 
         if image_transform is not None:
             image_transform = albumentations.to_dict(image_transform)
@@ -316,7 +316,6 @@ def main(
                 "valid-split": valid_split,
                 "test-split": test_split,
             },
-            "project": "neural-deskew",
             "type": "dataset",
         }
 

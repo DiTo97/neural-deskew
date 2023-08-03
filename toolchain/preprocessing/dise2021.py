@@ -47,7 +47,7 @@ def preprocess(output_dir: str) -> str:
 
         transformed = {
             "image": image,
-            "imagepath": series.imagepath,
+            "imagepath": str(series.imagepath),
             "angle": angle,
             "absangle": absangle,
         }

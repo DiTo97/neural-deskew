@@ -12,7 +12,7 @@ _format = "Image-{:d}-{angle:d}{image}.{ext}"
 
 
 def _transform(parser: parse.Parser, series: pd.Series) -> pd.Series:
-    """"A transform that parses metadata to a standard format"""
+    """A transform that parses metadata to a standard format"""
     imagename = series.id
     imageinfo = parser.parse(imagename).named
 

@@ -48,12 +48,11 @@ def preprocess(output_dir: str) -> str:
 
     artifact_dir = output_dir / "rdocuments"
 
-    kaggle.api.authenticate()
-
     if not artifact_dir.exists():
         artifact_dir.mkdir()
 
-    kaggle.api.dataset_download_files(_artifact, path=artifact_dir, unzip=True)
+        kaggle.api.authenticate()
+        kaggle.api.dataset_download_files(_artifact, path=artifact_dir, unzip=True)
 
     metadata = pd.read_csv(artifact_dir / "r-images.csv")
 

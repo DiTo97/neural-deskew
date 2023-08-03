@@ -3,13 +3,17 @@ import pathlib
 
 import kaggle
 import pandas as pd
+import parse
 
 
 _artifact = "vishnunkumar/rdocuments"
+_format = "Image-{:d}-{angle:d}{image}.{ext}"
 
 
 def preprocess(output_dir: str) -> str:
     output_dir = pathlib.Path(output_dir).resolve()
+
+    _ = parse.compile(_format)  # FIXME: parser
 
     artifact_dir = output_dir / "rdocuments"
 

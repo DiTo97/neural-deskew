@@ -13,8 +13,6 @@ _format = "Image-{:d}-{angle:d}{image}.{ext}"
 def preprocess(output_dir: str) -> str:
     output_dir = pathlib.Path(output_dir).resolve()
 
-    _ = parse.compile(_format)  # FIXME: parser
-
     artifact_dir = output_dir / "rdocuments"
 
     kaggle.api.authenticate()
@@ -28,17 +26,48 @@ def preprocess(output_dir: str) -> str:
 
     images_dir = artifact_dir / "rdocuments"
 
-    def join_transform(filename: str) -> str:
-        filepath = images_dir / filename
-        filepath = str(filepath)
+    parser = parse.compile(_format)
 
-        return filepath
+    def parse_transform(series: pd.Series) -> pd.Series:
+        imagename = series.id
+        imageinfo = parser.parse(imagename).named
+    
+        imagepath = images_dir / imagename
+        imagepath = str(imagepath)
 
-    metadata = metadata.rename(columns={"id": "image"})
+        image = f"{imageinfo['image']}.{imageinfo['ext']}"
+        angle = float(imageinfo["angle"])
+
+        message = (
+            f"The angle in {imagename} is not consistent. "
+            f"Expected {series.angle}, got {angle}"
+        )
+
+        assert angle == series.angle, message
+
+        absangle = abs(series.angle)
+
+        transformed = {
+            "image": image,
+            "imagepath": imagepath,
+            "angle": angle,
+            "absangle": absangle,
+        }
+
+        transformed = pd.Series(transformed)
+
+        return transformed
+    
+    metadata = metadata.apply(parse_transform, axis=1)
+
+    min_absangle_mask = metadata.groupby("image")["absangle"].transform("min")
+    min_absangle_mask = metadata["absangle"] == min_absangle_mask
+
+    metadata = metadata[min_absangle_mask]
+    metadata = metadata.sort_values("absangle").drop_duplicates("image")
+    metadata = metadata.drop("absangle", axis=1)
 
     metadata_artifact = artifact_dir / "metadata.csv"
-
-    metadata["image"] = metadata["image"].apply(join_transform)
 
     metadata.to_csv(metadata_artifact, index=False)
 

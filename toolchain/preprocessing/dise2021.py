@@ -14,17 +14,15 @@ _URL = "https://drive.google.com/uc?id=1a-a6aOqdsghjeHGLnCLsDs7NoJIus-Pw"
 
 def preprocess(output_dir: str) -> str:
     output_dir = pathlib.Path(output_dir).resolve()
-
-    parser = parse.compile(_format)
-
-    src_artifact_dir = output_dir / _artifact.split(".")[0]
     artifact_dir = output_dir / _artifact.split(".")[0].split("_")[0]
 
-    _ = output_dir / _artifact  # FIXME: artifact
+    if not artifact_dir.exists():
+        src_artifact = str(output_dir / _artifact)
+        src_artifact_dir = output_dir / _artifact.split(".")[0]
 
-    gdown.cached_download(_URL, src_artifact_dir, postprocess=gdown.extractall)
+        gdown.cached_download(_URL, src_artifact, postprocess=gdown.extractall)
 
-    src_artifact_dir.rename(artifact_dir)
+        src_artifact_dir.rename(artifact_dir)
 
     metadata = []
 
@@ -36,8 +34,10 @@ def preprocess(output_dir: str) -> str:
 
     metadata = pd.concat(metadata)
 
-    def parse_transform(row: pd.Series) -> pd.Series:
-        imagename = row.imagepath.split("/")[-1]
+    parser = parse.compile(_format)
+
+    def parse_transform(series: pd.Series) -> pd.Series:
+        imagename = series.imagepath.name
         imageinfo = parser.parse(imagename).named
 
         image = f"{imageinfo['image']}.{imageinfo['ext']}"
@@ -47,7 +47,7 @@ def preprocess(output_dir: str) -> str:
 
         transformed = {
             "image": image,
-            "imagepath": row.imagepath,
+            "imagepath": series.imagepath,
             "angle": angle,
             "absangle": absangle,
         }
@@ -57,21 +57,17 @@ def preprocess(output_dir: str) -> str:
         return transformed
 
     metadata = metadata.apply(parse_transform, axis=1)
-    metadata = metadata.groupby("image").agg({"absangle": min})
 
-    for split_dir in artifact_dir.iterdir():
-        for image in split_dir.iterdir():
-            imagename = image.stem
+    min_absangle_mask = metadata.groupby("image")["absangle"].transform("min")
+    min_absangle_mask = metadata["absangle"] == min_absangle_mask
 
-            angle = imagename.split("[")[-1]
-            angle = angle.split("]")[0]
-            angle = float(angle)
-
-            metadata.append((image, angle))
+    metadata = metadata[min_absangle_mask]
+    metadata = metadata.sort_values("absangle").drop_duplicates("image")
+    metadata = metadata.drop("absangle", axis=1)
 
     metadata_artifact = artifact_dir / "metadata.csv"
 
-    metadata = pd.DataFrame.from_records(metadata, columns=["image", "angle"])
+    metadata = pd.DataFrame.from_records(metadata, columns=["image", "imagepath", "angle"])
     metadata.to_csv(metadata_artifact, index=False)
 
     return str(artifact_dir)

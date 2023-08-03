@@ -1,6 +1,7 @@
 """A script for pre-processing the DISE 2021 dataset"""
 import os
 import pathlib
+from functools import partial
 
 import gdown
 import pandas as pd
@@ -10,6 +11,27 @@ import parse
 _artifact = "dise2021_45.zip"
 _format = "{image}[{angle:f}].{ext}"
 _URL = "https://drive.google.com/uc?id=1a-a6aOqdsghjeHGLnCLsDs7NoJIus-Pw"
+
+
+def _parse_transform(parser: parse.Parser, series: pd.Series) -> pd.Series:
+    imagename = series.imagepath.name
+    imageinfo = parser.parse(imagename).named
+
+    image = f"{imageinfo['image']}.{imageinfo['ext']}"
+    angle = float(imageinfo["angle"])
+
+    absangle = abs(angle)
+
+    transformed = {
+        "image": image,
+        "imagepath": str(series.imagepath),
+        "angle": angle,
+        "absangle": absangle,
+    }
+
+    transformed = pd.Series(transformed)
+
+    return transformed
 
 
 def preprocess(output_dir: str) -> str:
@@ -33,28 +55,8 @@ def preprocess(output_dir: str) -> str:
         metadata.append(split)
 
     metadata = pd.concat(metadata)
-
-    parser = parse.compile(_format)
-
-    def parse_transform(series: pd.Series) -> pd.Series:
-        imagename = series.imagepath.name
-        imageinfo = parser.parse(imagename).named
-
-        image = f"{imageinfo['image']}.{imageinfo['ext']}"
-        angle = float(imageinfo["angle"])
-
-        absangle = abs(angle)
-
-        transformed = {
-            "image": image,
-            "imagepath": str(series.imagepath),
-            "angle": angle,
-            "absangle": absangle,
-        }
-
-        transformed = pd.Series(transformed)
-
-        return transformed
+    
+    parse_transform = partial(_parse_transform, parser=parse.compile(_format))
 
     metadata = metadata.apply(parse_transform, axis=1)
 

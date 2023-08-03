@@ -22,6 +22,7 @@ Transform = object
 
 
 def image_transform_from_config(config: str | None) -> Transform | None:
+    """A serialized image augmentation pipeline from config file"""
     if config is None:
         return None
 
@@ -119,6 +120,7 @@ def main(
     seed: int,
 ):
     random.seed(seed)
+    np.random.seed(seed)
 
     cumsplit = train_split + valid_split + test_split
 
@@ -159,10 +161,44 @@ def main(
 
             metadata = os.path.join(dataset_dir, "metadata.csv")
             metadata = pd.read_csv(metadata)
+            
+            metadata = metadata.sample(frac=1.0)
 
-            for idx, row in metadata.iterrows():
-                image = row["image"]
-                angle = row["angle"]
+            splits = []
+
+            for split in ["train", "valid", "test"]:
+                fullvar = f"{split}_split"
+                ratio = locals()[fullvar]
+        
+                num_split = int(len(metadata) * ratio)
+        
+                splits += [split] * num_split
+
+            metadata["split"] = splits
+
+            for series in metadata.itertuples():
+                out_image = os.path.join(images_dir, series.image)
+                
+                image = Image.open(series.imagepath)
+
+                array = np.asarray(image)
+                array = rotate(array, -series.angle, cval=1.0)
+    
+                array = array * 255
+                array = array.astype(np.uint8)
+    
+                transform = np.random.choice(angle_transform, num_angle_transforms, replace=False)
+
+                for idx, angle in enumerate(transform):
+                    rotated = rotate(array, angle, cval=1.0)
+
+                    rotated = rotated * 255
+                    rotated = rotated.astype(np.uint8)
+
+                    for jdx in range(num_image_transforms):
+                        if jdx == 0:
+                            transformed = Image.fromarray(rotated)
+                            transformed.save(out_image)
 
     data_dir = "."  # FIXME
 

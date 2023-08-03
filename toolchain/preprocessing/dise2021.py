@@ -13,7 +13,8 @@ _format = "{image}[{angle:f}].{ext}"
 _URL = "https://drive.google.com/uc?id=1a-a6aOqdsghjeHGLnCLsDs7NoJIus-Pw"
 
 
-def _parse_transform(parser: parse.Parser, series: pd.Series) -> pd.Series:
+def _transform(parser: parse.Parser, series: pd.Series) -> pd.Series:
+    """A transform that parses metadata to a standard format"""
     imagename = series.imagepath.name
     imageinfo = parser.parse(imagename).named
 
@@ -56,7 +57,7 @@ def preprocess(output_dir: str) -> str:
 
     metadata = pd.concat(metadata)
     
-    parse_transform = partial(_parse_transform, parser=parse.compile(_format))
+    parse_transform = partial(_transform, parser=parse.compile(_format))
 
     metadata = metadata.apply(parse_transform, axis=1)
 

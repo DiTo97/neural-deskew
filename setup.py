@@ -7,6 +7,9 @@ ROOT = pathlib.Path(__file__).resolve().parent
 
 
 if __name__ == "__main__":
+    README = (ROOT / "README.md").read_text(encoding="utf-8")
+    requirements = (ROOT / "requirements.md").read_text(encoding="utf-8").splitlines()
+
     setup(
         name="neural-deskew",
         version="0.0.1",
@@ -14,9 +17,9 @@ if __name__ == "__main__":
         author="Federico Minutoli",
         author_email="fede97.minutoli@gmail.com",
         description="A lightweight neural network for document image skew estimation",
-        long_description=(ROOT / "README.md").read_text(),
+        long_description=README,
         long_description_content_type="text/markdown",
         python_requires=">=3.10",
         packages=find_packages(exclude=["toolchain"]),
-        install_requires=(ROOT / "requirements.txt").read_text().splitlines(),
+        install_requires=requirements,
     )

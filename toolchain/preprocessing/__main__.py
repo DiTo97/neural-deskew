@@ -218,14 +218,14 @@ def main(
                 fullvar = f"{split}_split"
                 ratio = locals()[fullvar]
 
-                num_split = int(len(metadata) * ratio)
+                num_split = round(len(metadata) * ratio)
 
                 splits += [split] * num_split
 
             metadata["split"] = splits
 
             for series in metadata.itertuples():
-                image_name, image_exte = series.image.rspit(".", 1)
+                image_name, image_exte = series.image.rsplit(".", 1)
 
                 image = Image.open(series.imagepath)
 
@@ -254,7 +254,7 @@ def main(
                     rotated = rotated * 255
                     rotated = rotated.astype(np.uint8)
 
-                    key = f"{idx:03d}_000"
+                    key = f"{idx:03d}"
 
                     out_image_name = f"{image_name}_{key}.{image_exte}"
                     out_image_path = os.path.join(images_dir, out_image_name)
@@ -262,13 +262,13 @@ def main(
                     rotated_image = Image.fromarray(rotated)
                     rotated_image.save(out_image_path)
 
-                    input = (out_image_name, series.split, dataset)
+                    input = (out_image_name, angle, series.split, dataset)
                     examples.append(input)
 
-                    for jdx in range(num_image_transforms):
-                        if jdx == 0:
-                            continue
+                    if image_transform is None:
+                        continue
 
+                    for jdx in range(num_image_transforms):
                         transformed = image_transform(image=rotated)["image"]
 
                         transformed = transformed * 255
@@ -282,11 +282,11 @@ def main(
                         transformed_image = Image.fromarray(transformed)
                         transformed_image.save(out_image_path)
 
-                        input = (out_image_name, series.split, dataset)
+                        input = (out_image_name, angle, series.split, dataset)
                         examples.append(input)
 
     dataframe = pd.DataFrame.from_records(
-        examples, columns=["filename", "split", "dataset"]
+        examples, columns=["filename", "angle", "split", "dataset"]
     )
 
     for split in ["train", "valid", "test"]:

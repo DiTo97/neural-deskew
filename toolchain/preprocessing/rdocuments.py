@@ -11,7 +11,9 @@ _artifact = "vishnunkumar/rdocuments"
 _format = "Image-{:d}-{angle:d}{image}.{ext}"
 
 
-def _transform(parser: parse.Parser, series: pd.Series) -> pd.Series:
+def _transform(
+    series: pd.Series, parser: parse.Parser, images_dir: pathlib.Path
+) -> pd.Series:
     """A transform that parses metadata to a standard format"""
     imagename = series.id
     imageinfo = parser.parse(imagename).named
@@ -58,8 +60,10 @@ def preprocess(output_dir: str) -> str:
 
     images_dir = artifact_dir / "rdocuments"
 
-    parse_transform = partial(_transform, parser=parse.compile(_format))
-    
+    parse_transform = partial(
+        _transform, parser=parse.compile(_format), images_dir=images_dir
+    )
+
     metadata = metadata.apply(parse_transform, axis=1)
 
     min_absangle_mask = metadata.groupby("image")["absangle"].transform("min")

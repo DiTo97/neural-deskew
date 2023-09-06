@@ -8,7 +8,7 @@ ROOT = pathlib.Path(__file__).resolve().parent
 
 if __name__ == "__main__":
     README = (ROOT / "README.md").read_text(encoding="utf-8")
-    requirements = (ROOT / "requirements.md").read_text(encoding="utf-8").splitlines()
+    requirements = (ROOT / "requirements.txt").read_text(encoding="utf-8").splitlines()
 
     setup(
         name="neural-deskew",

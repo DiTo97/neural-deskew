@@ -38,8 +38,10 @@ def _spectrum_magnitude(array: neural_deskew.Color) -> np_typing.NDArray[np.floa
 
 
 class Deskewer(abc_Deskewer):
-    def __init__(self, num_angles: int) -> None:
-        super().__init__(num_angles)
+    def __init__(self, angle_stop: int = 360, angle_step: int = 4) -> None:
+        super().__init__(angle_stop=angle_stop, angle_step=angle_step)
+
+        self.angle_space_rad = np.deg2rad(self.angle_space)
 
     def __call__(self, array: neural_deskew.Color) -> np_typing.NDArray[np.float32]:
         """It computes skew angle probas over the angle space"""
@@ -50,7 +52,7 @@ class Deskewer(abc_Deskewer):
         num_rows = int(S.shape[0] / 2)
         num_cols = int(S.shape[1] / 2)
 
-        profile = self.angle_space.copy()
+        profile = self.angle_space_rad.copy()
 
         def forward(t):
             _f = np.vectorize(

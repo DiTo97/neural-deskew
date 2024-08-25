@@ -13,9 +13,15 @@ from neural_deskew.core.transforms import decode, encode
 class abc_Deskewer(ABC):
     """A base class for document image deskew"""
 
-    def __init__(self, num_angles: int, *args: Any, **kwargs: dict[str, Any]) -> None:
-        self.angle_space = angle_space(num_angles)
-        self.noangle = int(num_angles / 2)
+    def __init__(
+        self,
+        *args: Any,
+        angle_stop: int = 360,
+        angle_step: int = 4,
+        **kwargs: dict[str, Any],
+    ) -> None:
+        self.angle_space = angle_space(angle_stop, angle_step)
+        self.noangle = 0
 
     @abstractmethod
     def __call__(self, array: neural_deskew.Color) -> np_typing.NDArray[np.float32]:
@@ -37,12 +43,13 @@ class abc_Deskewer(ABC):
         encoded = encode(image, max_size)
 
         angle = self.detect_angle(encoded)
-        angle = np.rad2deg(angle)
 
         decoded = decode(image, angle, **kwargs)
 
         return decoded
 
 
-def forward(model: abc_Deskewer, array: neural_deskew.Color) -> np_typing.NDArray[np.float32]:
+def forward(
+    model: abc_Deskewer, array: neural_deskew.Color
+) -> np_typing.NDArray[np.float32]:
     return model(array)
